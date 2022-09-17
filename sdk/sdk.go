@@ -22,7 +22,11 @@ var (
 
 	// Logger is a zerolog logger, that can be safely used from any part of the application.
 	// It gathers the format and the output.
-	Logger = LoggerContext.Logger()
+	TopLogger = LoggerContext.Logger()
+
+	level, _ = zerolog.ParseLevel(os.Getenv("ONVIF_ZEROLOG"))
+
+	Logger = TopLogger.Level(level)
 )
 
 func ReadAndParse(ctx context.Context, httpReply *http.Response, reply interface{}, tag string) error {
@@ -40,15 +44,18 @@ func ReadAndParse(ctx context.Context, httpReply *http.Response, reply interface
 	httpReply.Body.Close()
 
 	// my case
-	if tag == "Subscribe" ||
-		tag == "CreatePullPointSubscription" ||
-		tag == "GetStreamUri" ||
-		tag == "GetSnapshotUri" ||
-		tag == "GetEventProperties" ||
-		tag == "GetServiceCapabilities" ||
-		tag == "Unsubscribe" ||
-		tag == "GetCapabilities" {
-		fmt.Printf("body received for %s\n:%s\n", tag, b)
+	ll := os.Getenv("ONVIF_LOGLEVEL")
+	if ll == "RESPONSE" || ll == "BOTH" {
+		if tag == "Subscribe" ||
+			tag == "CreatePullPointSubscription" ||
+			tag == "GetStreamUri" ||
+			tag == "GetSnapshotUri" ||
+			tag == "GetEventProperties" ||
+			tag == "GetServiceCapabilities" ||
+			tag == "Unsubscribe" ||
+			tag == "GetCapabilities" {
+			fmt.Printf("body received for %s\n:%s\n", tag, b)
+		}
 	}
 
 	err = xml.Unmarshal(b, reply)
